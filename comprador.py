@@ -1,5 +1,6 @@
 import agentpy as ap
 from utils import PRODUCTOS
+from mercado import Mercado
 
 
 class Comprador(ap.Agent):
@@ -8,7 +9,9 @@ class Comprador(ap.Agent):
         self.money = 10
         self.items = {p: 0 for p in PRODUCTOS}
         self.mercados_disponibles = []
-        self.threshold = 1
+        self.threshold = self.p.c_threshold
+        self.comer = self.p.c_comer
+        self.satisfaction = 0
 
     def comprar(self):
         cantidad = 1
@@ -22,8 +25,11 @@ class Comprador(ap.Agent):
                         self.money -= precio
                         break
 
-    def seleccionar_mercados(self, mercados):
-        self.mercados_disponibles = self.model.random.sample(mercados, 2)
+    def seleccionar_mercados(self, distancia):
+        self.mercados_disponibles = [
+        vecino for vecino in self.model.espacio.neighbors(self, distance=distancia)
+        if isinstance(vecino, Mercado) 
+        ]
 
     def decidir_comprar(self):
         comprar = []
@@ -40,8 +46,10 @@ class Comprador(ap.Agent):
     def consume(self):
         for k,v in self.items.items():
             if v > 0:
-                self.items[k] -= 1
-                break
+                self.items[k] -= self.comer
+                self.satisfaction += 1
+            else:
+                self.satisfaction -= 1
 
     def get_0_items(self):
         return sum([v for v in self.items.values()]) == 0
